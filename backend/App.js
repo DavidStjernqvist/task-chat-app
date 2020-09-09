@@ -11,9 +11,11 @@ const io = socketIo(server);
 const index = require("./src/index");
 app.use(index);
 
+const fireBaseAdmin = require("./config/firebase");
+let defaultAuth = fireBaseAdmin.auth();
+let defaultDatabase = fireBaseAdmin.database();
+
 let interval;
-
-
 
 io.on("connection", (socket) => {
     console.log("New client connected");
@@ -27,8 +29,21 @@ io.on("connection", (socket) => {
 });
 
 const getApiAndEmit = (socket) => {
-    const response = new Date();
+    // const response = new Date();
+    const response = {name: "David Stjernqvist"};
     socket.emit("FromAPI", response);
 };
 
+defaultAuth.listUsers().then((userRecords) => {
+    userRecords.users.forEach((user) => console.log(user.providerData));
+})
+// const getAllUsers = (req, res) => {
+//    // const maxResults = 1; // optional arg.
+  
+//     defaultAuth.listUsers().then((userRecords) => {
+//       userRecords.users.forEach((user) => console.log(user.toJSON()));
+//       res.end('Retrieved users list successfully.');
+//     }).catch((error) => console.log(error));
+//   };
+//   getAllUsers();
 server.listen(port, () => console.log(`Listening on port: ${port}`));
