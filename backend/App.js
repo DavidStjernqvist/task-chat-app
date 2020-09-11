@@ -1,49 +1,39 @@
 const express = require("express");
 const app = express();
 const http = require("http");
-const socketIo = require("socket.io");
-
+const socket = require("socket.io");
+const cors = require("cors");
 const port = process.env.PORT || 8080;
 
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socket(server);
+//app.use(cors);
+app.use(function(req, res, next){
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
 
 const index = require("./src/index");
 app.use(index);
 
-const fireBaseAdmin = require("./config/firebase");
-let defaultAuth = fireBaseAdmin.auth();
-let defaultDatabase = fireBaseAdmin.database();
 
-let interval;
 
-io.on("connection", (socket) => {
-    console.log("New client connected");
-    if(interval)
-        clearInterval(interval);
-    interval = setInterval(() => getApiAndEmit(socket), 1000);
-    socket.on("disconnect", () => {
-        console.log("Client disconnected");
-        clearInterval(interval);
-    });
+io.on("connection", async (socket) => {
+    userJoinedMessage(socket);
+    socketId(socket);
+    sendMessage(socket);
 });
+const userJoinedMessage = (socket) => {
+    socket.broadcast.emit('User joined the room');
+}
+const socketId = (socket) => {
+    socket.emit('socketId', socket.id);
+}
+const sendMessage = (socket) => {
+    socket.on("sendMessage", body => {
+        io.emit("message", body)
+    });
+}
 
-const getApiAndEmit = (socket) => {
-    // const response = new Date();
-    const response = {name: "David Stjernqvist"};
-    socket.emit("FromAPI", response);
-};
-
-defaultAuth.listUsers().then((userRecords) => {
-    userRecords.users.forEach((user) => console.log(user.providerData));
-})
-// const getAllUsers = (req, res) => {
-//    // const maxResults = 1; // optional arg.
-  
-//     defaultAuth.listUsers().then((userRecords) => {
-//       userRecords.users.forEach((user) => console.log(user.toJSON()));
-//       res.end('Retrieved users list successfully.');
-//     }).catch((error) => console.log(error));
-//   };
-//   getAllUsers();
 server.listen(port, () => console.log(`Listening on port: ${port}`));
