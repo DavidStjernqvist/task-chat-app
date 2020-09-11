@@ -21,11 +21,12 @@ const {addUser, removeUser, getUser, getUsersInRoom} = require('./users');
 
 io.on("connection", (socket) => {
 
-    socket.on('join', ({name, room}, callback) => {
+    socket.on('join', ({name, room, imageURL, textColor, uid}, callback) => {
         console.log(`User joined room ${room}`);
-        const {error, user} = addUser({id: socket.id, name, room});
+    
+        const {user} = addUser({id: socket.id, name, room, imageURL, textColor, uid, loggedInStatus: true});
 
-        if(error) return callback(error);
+        // if(error) return callback(error);
 
         socket.join(user.room);
         
